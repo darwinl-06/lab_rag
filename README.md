@@ -14,8 +14,6 @@ Para la implementación del sistema RAG en EcoMarket es necesario seleccionar cu
 
 Respecto a la base de datos vectorial, la propuesta inicial es utilizar **ChromaDB**, dado que es open-source, ligera y de fácil integración con frameworks como LangChain. Esto facilita su uso en un entorno académico o de prototipado, donde los recursos suelen ser limitados. Sin embargo, también se contempla la posibilidad de migrar a una solución más robusta como **Pinecone** en escenarios de producción, debido a su capacidad de manejar millones de vectores, escalabilidad en la nube y tiempos de respuesta óptimos. Aunque Pinecone implica un costo adicional, su facilidad de uso y soporte en entornos empresariales lo convierten en una opción viable a futuro. Con esta combinación de componentes se logra un sistema flexible que puede adaptarse tanto a un entorno de pruebas como a uno de despliegue real, respondiendo a las necesidades de EcoMarket de contar con un servicio de atención al cliente confiable, actualizado y eficiente.
 
-Perfecto 🙌, sigamos con la **Fase 2: Creación de la Base de Conocimiento**. Te lo redacto en forma de explicación narrativa (como en tu Lab 1), para que quede listo en el README del Taller 2:
-
 ---
 
 ## Fase 2: Creación de la Base de Conocimiento de Documentos
@@ -25,6 +23,7 @@ El éxito de un sistema RAG depende directamente de la calidad y organización d
 Para asegurar un buen desempeño en la búsqueda semántica, es necesario dividir cada documento en fragmentos o *chunks* que puedan ser procesados por el modelo de embeddings. En este caso, se propone aplicar una **estrategia de segmentación recursiva**, que combina la separación por secciones naturales (como títulos y párrafos) con un control de tamaño máximo en tokens (ejemplo: 500 tokens con un solapamiento de 50). Este enfoque resulta más adecuado que una segmentación fija, ya que evita romper frases o apartados importantes y mantiene la coherencia del contenido. Finalmente, cada fragmento será convertido en un vector utilizando el modelo de embeddings seleccionado y cargado en la base de datos vectorial. De esta manera, cuando un cliente formule una pregunta, el sistema podrá recuperar los fragmentos más relevantes y construir una respuesta precisa y contextualizada.
 
 ---
+
 
 
 
