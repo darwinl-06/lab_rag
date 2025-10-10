@@ -1,5 +1,4 @@
-# app.py (simple, sin fallback)
-import argparse, os, json
+import argparse, os
 from pathlib import Path
 from rag.retriever import RAGRetriever
 import tomllib
@@ -12,45 +11,6 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY", "ollama"),                
     base_url=os.getenv("OPENAI_BASE_URL", "http://localhost:11434/v1")  
 )
-
-DATA = Path(__file__).parent
-
-def _load_json(p): 
-    return json.loads(Path(p).read_text(encoding="utf-8"))
-
-def _load_policy(): 
-    return (DATA / "returns_policy.md").read_text(encoding="utf-8")
-
-def _order_context(trk: str) -> str:
-    orders = _load_json(DATA / "orders.json")
-    o = next((x for x in orders if x["tracking"] == trk), None)
-    if not o:
-        return f"[ORDERS]\nNo existe el tracking {trk}."
-    return "\n".join([
-        "[ORDERS]",
-        f"tracking={o['tracking']}",
-        f"status={o['status']}",
-        f"eta={o['eta']}",
-        f"carrier={o['carrier']}",
-        f"tracking_url={o['tracking_url']}",
-        f"last_update={o['last_update']}",
-        f"delay_reason={o['delay_reason'] or '—'}",
-    ])
-
-def _return_context(sku: str) -> str:
-    products = _load_json(DATA / "products.json")
-    p = next((x for x in products if x["sku"] == sku), None)
-    if not p:
-        return f"[PRODUCT]\nNo existe el SKU {sku}."
-    return "\n".join([
-        "[PRODUCT]",
-        f"sku={p['sku']}",
-        f"name={p['name']}",
-        f"category={p['category']}",
-        f"returnable={'sí' if p['returnable'] else 'no'}",
-        "\n[POLICY]",
-        _load_policy()
-    ])
 
 def _render(template: str, context: str, **vars) -> tuple[str, str]:
     t = template.replace("{{context}}", context)
@@ -74,8 +34,6 @@ def _chat(system_msg: str, user_msg: str) -> str:
     return r.choices[0].message.content.strip()
 
 def _format_docs(docs):
-    # Si tu RAGRetriever ya trae .format_context(docs), puedes usarlo.
-    # Este helper es genérico por si no lo tienes:
     out = []
     for d in docs:
         src = d.metadata.get("source", "source")
@@ -125,7 +83,6 @@ def main():
     prompts = SETTINGS["prompts"]
 
     if args.cmd == "order":
-        # Usar únicamente el índice RAG como contexto (no consultas locales a orders.json)
         rag_ctx = _order_rag_context(args.tracking)
         if not rag_ctx:
             rag_ctx = "[RAG]\nNo se han encontrado fragmentos relevantes en el índice."
@@ -133,12 +90,11 @@ def main():
         sys, usr = _render(prompts["order_status"], ctx, tracking=args.tracking)
         print(_chat(sys, f"{usr}\n\n{ctx}"))
     elif args.cmd == "return":
-        # Usar únicamente el índice RAG como contexto para devoluciones
         rag_ctx = _return_rag_context(args.sku, args.days_since_delivery, args.opened)
         if not rag_ctx:
             rag_ctx = "[RAG]\nNo se han encontrado fragmentos relevantes en el índice."
         ctx = f"[RAG]\n{rag_ctx}"
-        name = ""  # No consultamos products.json localmente cuando usamos solo RAG
+        name = "" 
         sys, usr = _render(
             prompts["return_policy"], ctx,
             sku=args.sku,
@@ -154,13 +110,10 @@ def main():
         )
         print(_chat(sys, usr))
     elif args.cmd == "faq":
-        # FAQ handler: pregunta libre que usa únicamente el índice RAG
         q = args.question
-        # Reusar retriever para buscar fragmentos relevantes a la pregunta
         docs = rag.get_relevant_chunks(q)
         rag_ctx = _format_docs(docs) if docs else "[RAG]\nNo se han encontrado fragmentos relevantes en el índice."
         ctx = f"[RAG]\n{rag_ctx}"
-        # Usar un prompt genérico 'faq' si existe, sino usar el system/user por defecto
         if "faq" in prompts:
             sys, usr = _render(prompts["faq"], ctx, question=q)
         else:

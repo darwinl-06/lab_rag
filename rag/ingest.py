@@ -62,7 +62,6 @@ def build_index():
     docs += load_pdf("returns_policy.pdf")
     docs += load_pdf("faq.pdf")
 
-    # Excels (.xls del screenshot) — nombres tal cual
     docs += load_excel_rows("orders.xls",   sheet="orders",   row_to_text=row_to_text_orders)
     docs += load_excel_rows("products.xls",  sheet="products", row_to_text=row_to_text_products)
 
@@ -71,7 +70,6 @@ def build_index():
 
     embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
 
-    # Persistencia automática (langchain-chroma no requiere .persist())
     Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
