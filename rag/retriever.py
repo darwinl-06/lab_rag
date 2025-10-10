@@ -1,7 +1,7 @@
 # rag/retriever.py
 from pathlib import Path
 from typing import List
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain.schema import Document
 
@@ -19,7 +19,7 @@ class RAGRetriever:
         self.retriever = self.vs.as_retriever(search_type="similarity", search_kwargs={"k": k})
 
     def get_relevant_chunks(self, query: str) -> List[Document]:
-        return self.retriever.get_relevant_documents(query)
+        return self.retriever.invoke(query)
 
     def format_context(self, docs: List[Document]) -> str:
         lines = []

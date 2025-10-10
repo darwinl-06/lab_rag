@@ -118,26 +118,33 @@ def main():
     r.add_argument("--days_since_delivery", type=int, required=True)
     r.add_argument("--opened", action="store_true")
 
+    f = sub.add_parser("faq", help="Preguntas frecuentes (usa solo RAG)")
+    f.add_argument("--question", required=True, help="Pregunta en lenguaje natural")
+
     args = ap.parse_args()
     prompts = SETTINGS["prompts"]
 
     if args.cmd == "order":
-        ctx = _order_context(args.tracking)
+        # Usar únicamente el índice RAG como contexto (no consultas locales a orders.json)
         rag_ctx = _order_rag_context(args.tracking)
-        if rag_ctx:
-            ctx = f"{ctx}\n\n[RAG]\n{rag_ctx}"
+        if not rag_ctx:
+            rag_ctx = "[RAG]\nNo se han encontrado fragmentos relevantes en el índice."
+        ctx = f"[RAG]\n{rag_ctx}"
         sys, usr = _render(prompts["order_status"], ctx, tracking=args.tracking)
         print(_chat(sys, f"{usr}\n\n{ctx}"))
-    else:
-        ctx = _return_context(args.sku)
+    elif args.cmd == "return":
+        # Usar únicamente el índice RAG como contexto para devoluciones
         rag_ctx = _return_rag_context(args.sku, args.days_since_delivery, args.opened)
-        if rag_ctx:
-            ctx = f"{ctx}\n\n[FUNDAMENTO RAG]\n{rag_ctx}"
+        if not rag_ctx:
+            rag_ctx = "[RAG]\nNo se han encontrado fragmentos relevantes en el índice."
+        ctx = f"[RAG]\n{rag_ctx}"
+        name = ""  # No consultamos products.json localmente cuando usamos solo RAG
         sys, usr = _render(
             prompts["return_policy"], ctx,
             sku=args.sku,
             days_since_delivery=args.days_since_delivery,
-            opened=str(args.opened).lower()
+            opened=str(args.opened).lower(),
+            name=name
         )
         usr = (
             f"{usr}\n\n[INPUTS]\n"
@@ -146,6 +153,19 @@ def main():
             f"abierto={'true' if args.opened else 'false'}\n\n{ctx}"
         )
         print(_chat(sys, usr))
+    elif args.cmd == "faq":
+        # FAQ handler: pregunta libre que usa únicamente el índice RAG
+        q = args.question
+        # Reusar retriever para buscar fragmentos relevantes a la pregunta
+        docs = rag.get_relevant_chunks(q)
+        rag_ctx = _format_docs(docs) if docs else "[RAG]\nNo se han encontrado fragmentos relevantes en el índice."
+        ctx = f"[RAG]\n{rag_ctx}"
+        # Usar un prompt genérico 'faq' si existe, sino usar el system/user por defecto
+        if "faq" in prompts:
+            sys, usr = _render(prompts["faq"], ctx, question=q)
+        else:
+            sys, usr = "", q
+        print(_chat(sys, f"{usr}\n\n{ctx}"))
 
 if __name__ == "__main__":
     main()
