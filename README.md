@@ -33,17 +33,18 @@ En esta fase se integró un sistema de **Retrieval-Augmented Generation (RAG)** 
 ### 📂 Estructura del proyecto
 
 ```
-├── app.py                # Script principal con lógica de pedidos y devoluciones + RAG
-├── rag/
-│   ├── ingest.py         # Ingesta de documentos y construcción del índice vectorial
-│   └── retriever.py      # Definición del retriever para consultas
-├── products.json         # Catálogo de productos
-├── orders.json           # Datos de pedidos
-├── returns_policy.md     # Políticas de devoluciones
-├── faqs.md               # Preguntas frecuentes 
-├── settings.toml         # Configuración de prompts y modelo
-├── requirements.txt      # Dependencias del proyecto
-└── chroma/               # Carpeta persistente con la base vectorial
+
+├─ app.py                 
+├─ rag/
+│  └─ ingest.py           # Ingesta/indexación de documentos en Chroma
+│  └─ retriever.py
+├─ settings.toml          # Modelo/temperatura y prompt(s)
+├─ requirements.txt
+└─ data/
+   ├─ returns_policy.pdf  # Política de devoluciones
+   ├─ faq.pdf             # Preguntas frecuentes
+   ├─ orders.xls          # Datos de pedidos (tracking, estado, etc.)
+   └─ producs.xls         # Datos de productos (SKU, categoría, retornable, etc.)
 ```
 
 ---
@@ -86,11 +87,18 @@ python app.py order --tracking {NUMERO_DE_SEGUIMIENTO}
 python app.py return --sku {IDENTIFICADOR_DEL_PREFUCTO} --days_since_delivery {DIAS} --opened
 ```
 
+#### 3. Preguntas frecuentes
+```bash
+python .\app.py faq --question {PREGUNTA}
+```
+
+
 Parámetros:  
 - `--tracking`: número de seguimiento del pedido.  
 - `--sku`: identificador del producto.  
 - `--days_since_delivery`: días transcurridos desde la entrega.  
-- `--opened`: indicar si el producto fue abierto (opcional, por defecto es cerrado).  
+- `--opened`: indicar si el producto fue abierto (opcional, por defecto es cerrado).
+- `-question`: indica pregunta
 
 ---
 
@@ -155,7 +163,24 @@ En cuanto recibamos el producto, procesaremos tu reembolso en un plazo de 5 a 7 
 Si tienes alguna pregunta o necesitas ayuda durante el proceso, puedes comunicarte con nosotros en cualquier momento mediante el chat de soporte 24/7, escribirnos al correo contacto@ecomarket.com o llamarnos al +1-800-ECOMARKET.
 ```
 
+#### Ejemplo 4: Preunta frecuente
+```bash
+python .\app.py faq --question "¿Qué pasa si mi producto llegó dañado?"
+```
+
+Salida esperada:
+```
+Hola, Alex! Gracias por ponerse en contacto con nosotros y confiar en EcoMarket para resolver tus dudas. Aquí está una respuesta clara basada en el contexto que has proporcionado:
+
+Si tu producto llegó dañado, te ofrecemos un reemplazo gratuito o podemos procesar su reembolso completo del dinero. Para recibir esta ayuda especializada, por favor asegúrate de presentar evidencia como una foto o video que muestre el estado actual del producto. Una vez validado tu caso con la documentación necesaria, se llevará a cabo un procesamiento dentro de los 5 a 7 días hábiles siguientes su recepción por parte nuestro equipo especializado en soporte al cliente.
+
+Esperamos que esta información te sea útil y si tiens alguna otra pregunta o necesitas más detalles, no dudes en comunicarte con nosotros a través del chat de soporte 24/7, escribirnos al correo contact@ecomarket.com o llamarnos al +1-800-ECOMARKET. Estamos aquí para ayudar siempre que sea posible y apoyarte en cada paso del proceso de resolución.
+
+Espero poder asistir aún más contigo, Alex.
+```
+
 ---
+
 
 
 
