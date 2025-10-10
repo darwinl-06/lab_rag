@@ -28,6 +28,7 @@ Para asegurar un buen desempeño en la búsqueda semántica, es necesario dividi
 
 En esta fase se integró un sistema de **Retrieval-Augmented Generation (RAG)** al chatbot de EcoMarket. Para ello se implementó un módulo de ingesta que carga documentos relevantes (política de devoluciones, catálogo de productos y FAQs), los indexa en una base vectorial y permite recuperar fragmentos útiles durante la interacción. Estos fragmentos se incorporan como contexto en las respuestas, mejorando la precisión y el respaldo documental del asistente.
 
+Durante la implementación de la Fase 3 se presentaron varias limitaciones y se establecieron ciertas suposiciones para comprender mejor el alcance de la arquitectura RAG desarrollada. En primer lugar, el proyecto depende de recursos locales limitados: al ejecutarse con un modelo vía Ollama, la capacidad de cómputo condiciona la velocidad y la calidad de las respuestas frente a modelos más potentes en la nube. El sistema funciona únicamente con los documentos que fueron indexados mediante rag/ingest.py, por lo que la cobertura del conocimiento depende totalmente de los archivos almacenados en la carpeta data; si un SKU o número de pedido no aparece en esas fuentes, el asistente no puede ofrecer respuesta. Tampoco existe actualización automática: cualquier cambio en los documentos requiere volver a construir el índice manualmente. Además, la extracción de texto desde archivos PDF o Excel puede perder estructura en casos complejos, y el modelo de embeddings multilingüe empleado, aunque ligero y eficiente, no siempre captura todos los matices del lenguaje. También se reconoce que, aunque el prompt limita al modelo a responder solo con información del contexto, pueden ocurrir pequeñas alucinaciones o variaciones semánticas debido a la naturaleza probabilística del LLM. Se asume que los archivos en data/ representan la verdad organizacional (catálogos, políticas, pedidos) y que mantienen un formato estable, con identificadores como TRK-0003 o SKU-004.
 ---
 
 ### 📂 Estructura del proyecto
@@ -180,6 +181,7 @@ Espero poder asistir aún más contigo, Alex.
 ```
 
 ---
+
 
 
 
