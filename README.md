@@ -24,6 +24,139 @@ Para asegurar un buen desempeño en la búsqueda semántica, es necesario dividi
 
 ---
 
+## Fase 3: Implementación del Sistema RAG
+
+En esta fase se integró un sistema de **Retrieval-Augmented Generation (RAG)** al chatbot de EcoMarket. Para ello se implementó un módulo de ingesta que carga documentos relevantes (política de devoluciones, catálogo de productos y FAQs), los indexa en una base vectorial y permite recuperar fragmentos útiles durante la interacción. Estos fragmentos se incorporan como contexto en las respuestas, mejorando la precisión y el respaldo documental del asistente.
+
+---
+
+### 📂 Estructura del proyecto
+
+```
+├── app.py                # Script principal con lógica de pedidos y devoluciones + RAG
+├── rag/
+│   ├── ingest.py         # Ingesta de documentos y construcción del índice vectorial
+│   └── retriever.py      # Definición del retriever para consultas
+├── products.json         # Catálogo de productos
+├── orders.json           # Datos de pedidos
+├── returns_policy.md     # Políticas de devoluciones
+├── faqs.md               # Preguntas frecuentes 
+├── settings.toml         # Configuración de prompts y modelo
+├── requirements.txt      # Dependencias del proyecto
+└── chroma/               # Carpeta persistente con la base vectorial
+```
+
+---
+
+### ⚙️ Requisitos e instalación
+
+1. Crear entorno virtual:
+
+   ```bash
+   python -m venv venv  
+   venv\Scripts\activate      
+   ```
+
+2. Instalar dependencias:
+
+   ```bash
+   pip install -r requirements.txt
+   pip install langchain langchain-community langchain-openai langchain-chroma
+   ```
+
+3. Construir el índice de documentos:
+
+   ```bash
+   python -m rag.ingest
+   ```
+
+---
+
+### Uso del programa
+
+El script `app.py` funciona desde la línea de comandos con dos subcomandos:  
+
+#### 1. Consultar estado de pedido
+```bash
+python app.py order --tracking {NUMERO_DE_SEGUIMIENTO}
+```
+
+#### 2. Solicitar devolución de producto
+```bash
+python app.py return --sku {IDENTIFICADOR_DEL_PREFUCTO} --days_since_delivery {DIAS} --opened
+```
+
+Parámetros:  
+- `--tracking`: número de seguimiento del pedido.  
+- `--sku`: identificador del producto.  
+- `--days_since_delivery`: días transcurridos desde la entrega.  
+- `--opened`: indicar si el producto fue abierto (opcional, por defecto es cerrado).  
+
+---
+
+### 📌 Ejemplos
+
+#### Ejemplo 1: Estado de pedido con retraso
+```bash
+python app.py order --tracking TRK-0003
+```
+
+Salida esperada:
+```
+Hola, antes que nada quiero agradecerte profundamente por haberte puesto en contacto con nosotros y por confiar en EcoMarket para tu compra. 
+
+Revisé el estado de tu pedido con número de seguimiento TRK-0003 y encontré la siguiente información:  
+Estado actual: Retrasado  
+Fecha estimada de entrega: 2025-09-26  
+Enlace de rastreo: https://track.eco/0003  
+
+He notado que existe un retraso debido a una operación en la empresa de paquetería. Entiendo lo frustrante que puede ser y te pido disculpas sinceras por este inconveniente. Estamos trabajando de cerca con el transportador para garantizar que recibas tu pedido lo antes posible. 
+
+Si necesitas más ayuda, recuerda que puedes escribirnos en el chat 24/7, al correo contacto@ecomarket.com o llamarnos al +1-800-ECOMARKET.
+```
+
+---
+
+#### Ejemplo 2: Producto no elegible para devolución
+```bash
+python app.py return --sku SKU-001 --days_since_delivery 5 --opened
+```
+
+Salida esperada:
+```
+Hola, agradezco mucho que nos hayas contactado y que confíes en EcoMarket para tus compras. 
+Revisé la información del producto con SKU SKU-001 y debo informarte con toda transparencia que este artículo no puede devolverse porque pertenece a la categoría de higiene o perecederos, o bien porque ya ha sido abierto. Estas restricciones están establecidas por razones sanitarias y de seguridad.
+
+Entiendo que esta no es la respuesta que esperabas y lamento sinceramente la situación. Como alternativa, podemos ofrecerte un cupón del 10% de descuento en tu próxima compra como muestra de nuestro compromiso contigo. 
+
+Si tienes alguna pregunta o deseas hablar sobre otras opciones, por favor no dudes en comunicarte directamente con nosotros mediante el chat de soporte 24/7, el correo electrónico contacto@ecomarket.com o llamando al +1-800-ECOMARKET. Estoy aquí para apoyarte en todo lo que necesites.
+```
+
+---
+
+#### Ejemplo 3: Producto elegible para devolución
+```bash
+python app.py return --sku SKU-004 --days_since_delivery 10
+```
+
+Salida esperada:
+```
+Hola, muchas gracias por contactarnos y por confiar en EcoMarket con tu compra del producto con SKU SKU-004. 
+He revisado tu caso y confirmo que el producto es elegible para devolución.
+
+Para proceder, por favor sigue estos pasos:  
+1. Ingresa a tu cuenta en EcoMarket y dirígete a la sección "Mis pedidos".  
+2. Solicita la devolución y descarga la etiqueta de envío.  
+3. Empaca el producto en su empaque original.  
+4. Entrégalo al transportador asignado o en el punto autorizado más cercano.  
+
+En cuanto recibamos el producto, procesaremos tu reembolso en un plazo de 5 a 7 días hábiles. 
+
+Si tienes alguna pregunta o necesitas ayuda durante el proceso, puedes comunicarte con nosotros en cualquier momento mediante el chat de soporte 24/7, escribirnos al correo contacto@ecomarket.com o llamarnos al +1-800-ECOMARKET.
+```
+
+---
+
 
 
 
